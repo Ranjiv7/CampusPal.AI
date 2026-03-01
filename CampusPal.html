@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>CampusPal.AI</title>
+
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+
+
+    <style>
+
+        body {
+
+            margin: 0;
+
+            height: 100vh;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            background: linear-gradient(
+
+                135deg,
+
+                #5a3e2b 0%,
+
+                #7a5a40 40%,
+
+                #cbb89d 70%,
+
+                #e6d5bd 100%
+
+            );
+
+            font-family: Arial, sans-serif;
+
+            overflow-x: hidden;
+
+        }
+
+
+
+        .chat-container {
+
+            width: 400px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            position: relative;
+
+            z-index: 2;
+
+        }
+
+
+
+        .map-wrapper {
+
+            position: relative;
+
+            width: 85%;
+
+            height: 180px;
+
+            margin-bottom: 12px;
+
+        }
+
+
+
+        #map {
+
+            width: 100%;
+
+            height: 100%;
+
+            border-radius: 20px;
+
+        }
+
+
+
+        .messages {
+
+            width: 100%;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+
+        .message {
+
+            padding: 8px 12px;
+
+            background: #5a3e2b;
+
+            color: white;
+
+            border-radius: 15px;
+
+            align-self: flex-end;
+
+            max-width: 75%;
+
+            word-wrap: break-word;
+
+        }
+
+
+
+        .chat-bar {
+
+            width: 100%;
+
+            display: flex;
+
+            background: #f5efe6;
+
+            border-radius: 25px;
+
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+            overflow: hidden;
+
+        }
+
+
+
+        .chat-bar input {
+
+            flex: 1;
+
+            padding: 12px 15px;
+
+            border: none;
+
+            outline: none;
+
+            font-size: 14px;
+
+            background: transparent;
+
+        }
+
+
+
+        .chat-bar button {
+
+            padding: 12px 18px;
+
+            border: none;
+
+            background: #7a5a40;
+
+            color: white;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+        }
+
+
+
+        .chat-bar button:hover {
+
+            background: #5a3e2b;
+
+        }
+
+
+
+        .title {
+
+            font-family: 'Orbitron', sans-serif;
+
+            font-size: 28px;
+
+            margin-top: 25px;
+
+            letter-spacing: 2px;
+
+            color: #f5efe6;
+
+            position: relative;
+
+        }
+
+
+
+        /* Lustrous Brown Effect for Pal */
+
+        .title span {
+
+            background: linear-gradient(
+
+                135deg,
+
+                #3e2723,
+
+                #5d4037,
+
+                #8d6e63,
+
+                #a1887f
+
+            );
+
+            -webkit-background-clip: text;
+
+            -webkit-text-fill-color: transparent;
+
+        }
+
+
+
+        .custom-marker {
+
+            width: 42px;
+
+            height: 42px;
+
+            border-radius: 50%;
+
+            background: #d4af37;
+
+            border: 4px solid white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+
+        .custom-marker svg {
+
+            width: 18px;
+
+            height: 18px;
+
+            fill: white;
+
+        }
+
+
+        /* ═══════════════════════════════════════════
+           ADDITIONS ONLY — original code untouched above
+           ═══════════════════════════════════════════ */
+
+        * { box-sizing: border-box; }
+
+        /* ── ONBOARDING ── */
+        .onboarding-container {
+            width: 380px;
+            background: #f5efe6;
+            border-radius: 24px;
+            padding: 36px 32px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+        .onboarding-container.hidden { display: none; }
+        .onboarding-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 26px;
+            letter-spacing: 2px;
+            color: #5a3e2b;
+            margin-bottom: 4px;
+        }
+        .onboarding-title span {
+            background: linear-gradient(135deg, #3e2723, #5d4037, #8d6e63, #a1887f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .onboarding-subtitle { font-size: 13px; color: #4a2e1a; margin-top: -10px; text-align: center; }
+        .step-indicator { display: flex; gap: 8px; margin-bottom: 4px; }
+        .step-dot { width: 10px; height: 10px; border-radius: 50%; background: #cbb89d; transition: background 0.3s; }
+        .step-dot.active { background: #7a5a40; }
+        .step-dot.done   { background: #5a3e2b; }
+        .step { width: 100%; display: flex; flex-direction: column; gap: 14px; animation: ob-fade 0.3s ease; }
+        .step.hidden { display: none; }
+        @keyframes ob-fade {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .step label { font-size: 13px; color: #3e2008; font-weight: bold; margin-bottom: -8px; }
+        .step input, .step select {
+            padding: 11px 14px; border: 2px solid #7a5a40; border-radius: 12px;
+            font-size: 14px; outline: none; background: white; color: #1e0e00;
+            transition: border 0.2s; width: 100%;
+        }
+        .step input:focus, .step select:focus { border-color: #3e2008; }
+        .step-buttons { display: flex; gap: 10px; margin-top: 4px; }
+        .btn-back {
+            flex: 1; padding: 11px; border: 2px solid #7a5a40; border-radius: 12px;
+            background: transparent; color: #3e2008; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-back:hover { background: #7a5a40; color: white; }
+        .btn-next {
+            flex: 2; padding: 11px; border: none; border-radius: 12px;
+            background: #7a5a40; color: white; font-weight: bold;
+            cursor: pointer; font-size: 14px; transition: background 0.2s;
+        }
+        .btn-next:hover { background: #5a3e2b; }
+        .error-msg { font-size: 12px; color: #b71c1c; font-weight: bold; text-align: center; min-height: 16px; }
+
+        /* ── BODY APP MODE ── */
+        body.app-mode {
+            align-items: flex-start;
+            height: auto;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* ── APP WRAPPER ── */
+        .app-wrapper { display: none; flex-direction: column; width: 100%; min-height: 100vh; }
+        .app-wrapper.visible { display: flex; }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            width: 100%;
+            background: rgba(30,18,10,0.96);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            height: 56px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.4);
+            flex-shrink: 0;
+        }
+        .navbar-brand { font-family: 'Orbitron', sans-serif; font-size: 17px; color: #f5efe6; letter-spacing: 1px; white-space: nowrap; }
+        .navbar-brand span { background: linear-gradient(135deg, #8d6e63, #cbb89d, #a1887f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .navbar-links { display: flex; gap: 2px; align-items: center; }
+        .nav-link {
+            padding: 6px 12px; border-radius: 18px; color: #e8d5b0; font-size: 12.5px;
+            cursor: pointer; border: none; background: transparent; transition: all 0.2s; white-space: nowrap;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .nav-link.active { background: #7a5a40; color: #fff; }
+        .navbar-user { font-size: 12px; color: #e8d5b0; white-space: nowrap; }
+
+        /* ── PAGE SYSTEM ── */
+        .page-content { padding: 24px 36px 60px; max-width: 1100px; margin: 0 auto; width: 100%; }
+        .page { display: none; }
+        .page.active { display: block; animation: ob-fade 0.3s ease; }
+        .section-title { font-size: 20px; font-weight: bold; color: #fff; margin-bottom: 18px; }
+        .section-title small { font-size: 13px; font-weight: normal; color: #e8d5b0; margin-left: 8px; }
+
+        /* ── GRIDS ── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+
+        /* ── STAT CARDS ── */
+        .card {
+            background: rgba(20,10,5,0.55); backdrop-filter: blur(8px);
+            border-radius: 18px; padding: 20px; border: 1px solid rgba(203,184,157,0.25); color: #fff;
+        }
+        .card-title { font-size: 11px; color: #e8d5b0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .card-value { font-size: 30px; font-weight: bold; color: #fff; }
+        .card-sub   { font-size: 11px; color: #cbb89d; margin-top: 4px; }
+        .card-value.green  { color: #69f0ae; }
+        .card-value.yellow { color: #ffd54f; }
+        .card-value.red    { color: #ff6e6e; }
+
+        /* ── PROGRESS BARS ── */
+        .progress-wrap { margin-bottom: 13px; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #e8d5b0; margin-bottom: 5px; }
+        .progress-bar-bg   { background: rgba(255,255,255,0.1); border-radius: 10px; height: 7px; }
+        .progress-bar-fill { height: 7px; border-radius: 10px; background: linear-gradient(90deg, #7a5a40, #cbb89d); }
+
+        /* ── DASHBOARD MAP+CHAT PANEL ── */
+        .dash-map-chat {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        /* map inside dashboard reuses .map-wrapper but needs full size */
+        .dash-map-chat .map-wrapper {
+            width: 100%;
+            height: 100%;
+            min-height: 260px;
+            margin-bottom: 0;
+            border-radius: 20px;
+        }
+        .dash-map-chat .map-wrapper #map {
+            width: 100%;
+            height: 100%;
+            min-height: 260px;
+            border-radius: 20px;
+        }
+        /* chat panel inside dashboard */
+        .dash-chat-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .dash-chat-messages {
+            flex: 1;
+            min-height: 180px;
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 4px 0;
+        }
+        /* chat-bar inside dashboard uses the original .chat-bar class naturally */
+
+        /* ── REC CARDS ── */
+        .rec-card {
+            background: rgba(20,10,5,0.45); border-radius: 14px; padding: 14px 16px;
+            border: 1px solid rgba(203,184,157,0.2); display: flex; align-items: flex-start;
+            gap: 12px; margin-bottom: 12px; transition: background 0.2s;
+        }
+        .rec-card:hover { background: rgba(20,10,5,0.65); }
+        .rec-icon  { font-size: 22px; min-width: 34px; text-align: center; }
+        .rec-title { font-size: 13.5px; font-weight: bold; color: #fff; margin-bottom: 3px; }
+        .rec-desc  { font-size: 12px; color: #e8d5b0; }
+        .rec-tag   { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-top: 5px; }
+        .rec-tag.event { background: rgba(105,240,174,0.2); color: #69f0ae; }
+        .rec-tag.club  { background: rgba(100,181,246,0.25); color: #90caf9; }
+        .rec-tag.exam  { background: rgba(255,110,110,0.2); color: #ff8a80; }
+        .rec-tag.alert { background: rgba(255,213,79,0.2);  color: #ffd54f; }
+
+        /* ── EVENT CARDS ── */
+        .event-card {
+            background: rgba(20,10,5,0.5); border-radius: 14px; padding: 16px;
+            border: 1px solid rgba(203,184,157,0.2); margin-bottom: 12px;
+        }
+        .event-date  { font-size: 11px; color: #ffd54f; font-weight: bold; margin-bottom: 4px; }
+        .event-title { font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 4px; }
+        .event-loc   { font-size: 12px; color: #e8d5b0; }
+
+        /* ── TABLE ── */
+        .doc-table { width: 100%; border-collapse: collapse; }
+        .doc-table th { text-align: left; font-size: 11px; color: #e8d5b0; padding: 8px 12px; border-bottom: 1px solid rgba(203,184,157,0.3); }
+        .doc-table td { font-size: 13px; color: #fff; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .doc-table tr:hover td { background: rgba(255,255,255,0.06); }
+        .doc-link { color: #ffd54f; text-decoration: underline; cursor: pointer; }
+        /* ── HEATMAP TOOLTIP ── */
+        .heat-tooltip {
+            background: rgba(20,10,5,0.85) !important;
+            color: #ffd54f !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-size: 11px !important;
+            font-weight: bold !important;
+            padding: 3px 8px !important;
+            box-shadow: none !important;
+        }
+        .heat-tooltip::before { display: none !important; }
+
+        /* ── HEATMAP LEGEND ── */
+        .heatmap-legend {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(20,10,5,0.82);
+            border-radius: 10px;
+            padding: 8px 12px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 11px;
+            color: #e8d5b0;
+            pointer-events: none;
+        }
+        .heatmap-legend .leg-row { display: flex; align-items: center; gap: 6px; }
+        .heatmap-legend .leg-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+
+    </style>
+
+</head>
+
+<body>
+
+
+    <!-- ══════════════════════════════
+         ONBOARDING
+         ══════════════════════════════ -->
+    <div class="onboarding-container" id="onboarding">
+
+        <div class="onboarding-title">Campus<span>Pal.AI</span></div>
+        <p class="onboarding-subtitle">Your smart campus companion</p>
+
+        <div class="step-indicator">
+            <div class="step-dot active" id="dot0"></div>
+            <div class="step-dot" id="dot1"></div>
+            <div class="step-dot" id="dot2"></div>
+        </div>
+
+        <div class="step" id="step0">
+            <label>What's your name?</label>
+            <input type="text" id="inp-name" placeholder="e.g. Arjun Sharma" />
+            <div class="error-msg" id="err0"></div>
+            <div class="step-buttons">
+                <button class="btn-next" onclick="nextStep(0)">Continue →</button>
+            </div>
+        </div>
+
+        <div class="step hidden" id="step1">
+            <label>Your College</label>
+            <select id="inp-college">
+                <option value="">Select your college</option>
+                <option value="iit madras">IIT Madras — Chennai, Tamil Nadu</option>
+                <option value="bits pilani">BITS Pilani — Pilani, Rajasthan</option>
+                <option value="jadavpur university">Jadavpur University — Kolkata, West Bengal</option>
+                <option value="vit vellore">VIT Vellore — Vellore, Tamil Nadu</option>
+                <option value="manipal institute">Manipal Institute of Technology — Manipal, Karnataka</option>
+            </select>
+            <div class="error-msg" id="err1"></div>
+            <div class="step-buttons">
+                <button class="btn-back" onclick="prevStep(1)">← Back</button>
+                <button class="btn-next" onclick="nextStep(1)">Continue →</button>
+            </div>
+        </div>
+
+        <div class="step hidden" id="step2">
+            <label>Branch</label>
+            <select id="inp-branch">
+                <option value="">Select your branch</option>
+                <option value="cse">Computer Science Engineering</option>
+                <option value="mech">Mechanical Engineering</option>
+                <option value="ece">Electronics & Communication Engineering</option>
+                <option value="eee">Electrical & Electronics Engineering</option>
+                <option value="aiml">Artificial Intelligence & Machine Learning</option>
+                <option value="aero">Aerospace Engineering</option>
+                <option value="civil">Civil Engineering</option>
+                <option value="chem">Chemical Engineering</option>
+            </select>
+            <label>Semester</label>
+            <select id="inp-sem">
+                <option value="">Select semester</option>
+                <option>1st</option><option>2nd</option><option>3rd</option>
+                <option>4th</option><option>5th</option><option>6th</option>
+                <option>7th</option><option>8th</option>
+            </select>
+            <div class="error-msg" id="err2"></div>
+            <div class="step-buttons">
+                <button class="btn-back" onclick="prevStep(2)">← Back</button>
+                <button class="btn-next" onclick="finishOnboarding()">Let's Go 🎓</button>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ══════════════════════════════
+         FULL APP
+         ══════════════════════════════ -->
+    <div class="app-wrapper" id="appWrapper">
+
+        <!-- NAVBAR -->
+        <nav class="navbar">
+            <div class="navbar-brand">Campus<span>Pal.AI</span></div>
+            <div class="navbar-links">
+                <button class="nav-link active" onclick="showPage('dashboard',this)">Dashboard</button>
+                <button class="nav-link" onclick="showPage('events',this)">Events</button>
+                <button class="nav-link" onclick="showPage('documents',this)">Documents</button>
+                <button class="nav-link" onclick="showPage('exams',this)">Exams</button>
+                <button class="nav-link" onclick="showPage('calendar',this)">Academic Calendar</button>
+                <button class="nav-link" onclick="showPage('clubs',this)">Clubs</button>
+
+            </div>
+            <div class="navbar-user" id="navUser"></div>
+        </nav>
+
+
+        <!-- ── DASHBOARD (default) ── -->
+        <div class="page active" id="page-dashboard">
+            <div class="page-content">
+
+                <div class="section-title" id="dashGreeting">Dashboard</div>
+
+                <!-- MAP + CHAT SIDE BY SIDE -->
+                <div class="dash-map-chat">
+
+                    <div class="map-wrapper">
+                        <div id="map"></div>
+                        <div class="heatmap-legend">
+                            <div style="font-weight:bold;margin-bottom:2px;font-size:11px;">🔥 Crowd Density</div>
+                            <div class="leg-row"><div class="leg-dot" style="background:rgba(255,50,50,0.85)"></div> High</div>
+                            <div class="leg-row"><div class="leg-dot" style="background:rgba(255,165,0,0.85)"></div> Medium</div>
+                            <div class="leg-row"><div class="leg-dot" style="background:rgba(80,200,80,0.85)"></div> Low</div>
+                        </div>
+                    </div>
+
+                    <div class="dash-chat-panel card">
+                        <div style="font-size:13px;color:#e8d5b0;font-weight:bold;margin-bottom:6px;">💬 Ask CampusPal.AI</div>
+                        <div class="dash-chat-messages messages" id="messages"></div>
+                        <div class="chat-bar">
+                            <input type="text" id="input" placeholder="Type a message...">
+                            <button onclick="sendMessage()">Send</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- STAT CARDS -->
+                <div class="grid-4">
+                    <div class="card">
+                        <div class="card-title">Attendance</div>
+                        <div class="card-value green">82%</div>
+                        <div class="card-sub">Min required: 75%</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Curriculum Progress</div>
+                        <div class="card-value yellow">67%</div>
+                        <div class="card-sub">Syllabus covered</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Assignments Due</div>
+                        <div class="card-value red">3</div>
+                        <div class="card-sub">Next due: Tomorrow</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">CGPA</div>
+                        <div class="card-value">8.4</div>
+                        <div class="card-sub">Last updated: Sem 4</div>
+                    </div>
+                </div>
+
+                <!-- PROGRESS BARS -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title" style="margin-bottom:16px;color:#e8d5b0">Subject-wise Attendance</div>
+                        <div id="attendance-bars"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title" style="margin-bottom:16px;color:#e8d5b0">Curriculum Progress</div>
+                        <div id="curriculum-bars"></div>
+                    </div>
+                </div>
+
+                <!-- RECOMMENDATIONS -->
+                <div class="section-title" style="margin-top:6px">✨ Recommended for You</div>
+                <div class="grid-2">
+                    <div>
+                        <div class="rec-card">
+                            <div class="rec-icon">🎤</div>
+                            <div>
+                                <div class="rec-title">TEDx Campus Talk — AI & Society</div>
+                                <div class="rec-desc">Join 200+ students at the main auditorium this Friday. Free registration.</div>
+                                <span class="rec-tag event">Event · Mar 7</span>
+                            </div>
+                        </div>
+                        <div class="rec-card">
+                            <div class="rec-icon">💻</div>
+                            <div>
+                                <div class="rec-title">Join the Coding Club</div>
+                                <div class="rec-desc">Weekly contests, hackathons, and peer learning sessions every Saturday.</div>
+                                <span class="rec-tag club">Club · Open Enrollment</span>
+                            </div>
+                        </div>
+                        <div class="rec-card">
+                            <div class="rec-icon">🎨</div>
+                            <div>
+                                <div class="rec-title">Design Thinking Workshop</div>
+                                <div class="rec-desc">2-day hands-on workshop with industry mentors. Limited seats available.</div>
+                                <span class="rec-tag event">Event · Mar 10–11</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="rec-card">
+                            <div class="rec-icon">⚠️</div>
+                            <div>
+                                <div class="rec-title">Computer Networks Attendance Alert</div>
+                                <div class="rec-desc">Your attendance is at 68%. Attend next 3 classes to stay above 75%.</div>
+                                <span class="rec-tag alert">Alert</span>
+                            </div>
+                        </div>
+                        <div class="rec-card">
+                            <div class="rec-icon">📸</div>
+                            <div>
+                                <div class="rec-title">Photography Club — New Members</div>
+                                <div class="rec-desc">Beginner-friendly. Gear provided. Campus shoots every Sunday morning.</div>
+                                <span class="rec-tag club">Club · Open Enrollment</span>
+                            </div>
+                        </div>
+                        <div class="rec-card">
+                            <div class="rec-icon">📝</div>
+                            <div>
+                                <div class="rec-title">Mid-Semester Exams in 12 Days</div>
+                                <div class="rec-desc">5 subjects scheduled. Check the Exams tab for your timetable.</div>
+                                <span class="rec-tag exam">Exam · Starts Mar 15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- ── EVENTS ── -->
+        <div class="page" id="page-events">
+            <div class="page-content">
+                <div class="section-title">Events <small>Happening on campus</small></div>
+                <div class="event-card">
+                    <div class="event-date">📅 Friday, March 7 · 3:00 PM</div>
+                    <div class="event-title">TEDx Campus Talk — AI & Society</div>
+                    <div class="event-loc">📍 Main Auditorium · Free Entry</div>
+                </div>
+                <div class="event-card">
+                    <div class="event-date">📅 March 10–11 · 9:00 AM</div>
+                    <div class="event-title">Design Thinking Workshop</div>
+                    <div class="event-loc">📍 Innovation Lab, Block C · Register at desk</div>
+                </div>
+                <div class="event-card">
+                    <div class="event-date">📅 Saturday, March 8 · 6:00 PM</div>
+                    <div class="event-title">Annual Cultural Fest — Euphoria 2025</div>
+                    <div class="event-loc">📍 Open Air Theatre · Entry ₹50</div>
+                </div>
+                <div class="event-card">
+                    <div class="event-date">📅 March 12 · 11:00 AM</div>
+                    <div class="event-title">Industry Guest Lecture — Cloud Computing</div>
+                    <div class="event-loc">📍 Seminar Hall 2 · CSE students preferred</div>
+                </div>
+                <div class="event-card">
+                    <div class="event-date">📅 March 14 · 2:00 PM</div>
+                    <div class="event-title">Hackathon: Build for Bharat</div>
+                    <div class="event-loc">📍 Computer Lab Complex · Teams of 3–4</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ── DOCUMENTS ── -->
+        <div class="page" id="page-documents">
+            <div class="page-content">
+                <div class="section-title">College Documents <small>Official resources</small></div>
+                <div class="card">
+                    <table class="doc-table">
+                        <thead><tr><th>Document</th><th>Category</th><th>Updated</th><th>Link</th></tr></thead>
+                        <tbody>
+                            <tr><td>Semester 5 Timetable</td><td>Timetable</td><td>Jan 2025</td><td><span class="doc-link">View PDF</span></td></tr>
+                            <tr><td>Academic Regulations 2023</td><td>Regulations</td><td>Aug 2023</td><td><span class="doc-link">View PDF</span></td></tr>
+                            <tr><td>Examination Schedule — Sem 5</td><td>Exams</td><td>Feb 2025</td><td><span class="doc-link">View PDF</span></td></tr>
+                            <tr><td>Fee Payment Circular</td><td>Finance</td><td>Dec 2024</td><td><span class="doc-link">View PDF</span></td></tr>
+                            <tr><td>Hostel Allotment List</td><td>Hostel</td><td>Nov 2024</td><td><span class="doc-link">View PDF</span></td></tr>
+                            <tr><td>Scholarship Application Form</td><td>Finance</td><td>Jan 2025</td><td><span class="doc-link">Download</span></td></tr>
+                            <tr><td>Anti-Ragging Policy</td><td>Policy</td><td>Aug 2024</td><td><span class="doc-link">View PDF</span></td></tr>
+                            <tr><td>Campus Wi-Fi Setup Guide</td><td>IT</td><td>Sep 2024</td><td><span class="doc-link">View PDF</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ── EXAMS ── -->
+        <div class="page" id="page-exams">
+            <div class="page-content">
+                <div class="section-title">Exams <small>Mid-semester schedule</small></div>
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-title">Data Structures</div>
+                        <div class="card-value" style="font-size:20px">Mar 15</div>
+                        <div class="card-sub">10:00 AM · Hall A</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Operating Systems</div>
+                        <div class="card-value" style="font-size:20px">Mar 17</div>
+                        <div class="card-sub">10:00 AM · Hall B</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">DBMS</div>
+                        <div class="card-value" style="font-size:20px">Mar 19</div>
+                        <div class="card-sub">2:00 PM · Hall A</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Computer Networks</div>
+                        <div class="card-value" style="font-size:20px">Mar 21</div>
+                        <div class="card-sub">10:00 AM · Hall C</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Machine Learning</div>
+                        <div class="card-value" style="font-size:20px">Mar 22</div>
+                        <div class="card-sub">2:00 PM · Hall B</div>
+                    </div>
+                    <div class="card" style="border-color:rgba(255,183,77,0.3)">
+                        <div class="card-title">Days Until First Exam</div>
+                        <div class="card-value yellow">12</div>
+                        <div class="card-sub">Start preparing now!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ── ACADEMIC CALENDAR ── -->
+        <div class="page" id="page-calendar">
+            <div class="page-content">
+                <div class="section-title">Academic Calendar <small>2024–25</small></div>
+                <div class="card">
+                    <table class="doc-table">
+                        <thead><tr><th>Event</th><th>Date</th><th>Duration</th></tr></thead>
+                        <tbody>
+                            <tr><td>Semester 5 Begins</td><td>Aug 1, 2024</td><td>—</td></tr>
+                            <tr><td>Add/Drop Deadline</td><td>Aug 15, 2024</td><td>—</td></tr>
+                            <tr><td>Mid-Semester Exams</td><td>Mar 15–22, 2025</td><td>8 days</td></tr>
+                            <tr><td>Holi Break</td><td>Mar 13–14, 2025</td><td>2 days</td></tr>
+                            <tr><td>Project Submission Deadline</td><td>Apr 5, 2025</td><td>—</td></tr>
+                            <tr><td>End-Semester Exams</td><td>Apr 28 – May 10, 2025</td><td>13 days</td></tr>
+                            <tr><td>Results Declaration</td><td>May 30, 2025</td><td>—</td></tr>
+                            <tr><td>Summer Break</td><td>Jun 1 – Jul 15, 2025</td><td>45 days</td></tr>
+                            <tr><td>Semester 6 Begins</td><td>Jul 16, 2025</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ── CLUBS ── -->
+        <div class="page" id="page-clubs">
+            <div class="page-content">
+                <div class="section-title">Clubs & Societies <small>Find your community</small></div>
+                <div class="grid-3">
+                    <div class="rec-card" style="flex-direction:column;gap:8px">
+                        <div style="font-size:30px">💻</div>
+                        <div class="rec-title">Coding Club</div>
+                        <div class="rec-desc">Weekly contests, hackathons, open source projects. 340 members.</div>
+                        <span class="rec-tag club">Open Enrollment</span>
+                    </div>
+                    <div class="rec-card" style="flex-direction:column;gap:8px">
+                        <div style="font-size:30px">📸</div>
+                        <div class="rec-title">Photography Club</div>
+                        <div class="rec-desc">Campus shoots, editing workshops, annual photobook. 120 members.</div>
+                        <span class="rec-tag club">Open Enrollment</span>
+                    </div>
+                    <div class="rec-card" style="flex-direction:column;gap:8px">
+                        <div style="font-size:30px">🎭</div>
+                        <div class="rec-title">Dramatics Society</div>
+                        <div class="rec-desc">Street plays, annual theatre fest, improv nights. 80 members.</div>
+                        <span class="rec-tag club">Auditions Open</span>
+                    </div>
+                    <div class="rec-card" style="flex-direction:column;gap:8px">
+                        <div style="font-size:30px">🤖</div>
+                        <div class="rec-title">Robotics Club</div>
+                        <div class="rec-desc">Build bots, compete at inter-college fests. Hardware provided.</div>
+                        <span class="rec-tag club">Open Enrollment</span>
+                    </div>
+                    <div class="rec-card" style="flex-direction:column;gap:8px">
+                        <div style="font-size:30px">🎵</div>
+                        <div class="rec-title">Music Club</div>
+                        <div class="rec-desc">Jam sessions, live performances, recording studio access. 150 members.</div>
+                        <span class="rec-tag club">Auditions Open</span>
+                    </div>
+                    <div class="rec-card" style="flex-direction:column;gap:8px">
+                        <div style="font-size:30px">📰</div>
+                        <div class="rec-title">Campus Journalism</div>
+                        <div class="rec-desc">Write for the campus newsletter and podcast. All branches welcome.</div>
+                        <span class="rec-tag club">Open Enrollment</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+    </div><!-- end app-wrapper -->
+
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+
+
+<script>
+
+    var map = L.map('map', {
+
+        zoomControl: false,
+
+        attributionControl: false
+
+    }).setView([12.9916, 80.2336], 16);
+
+
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+        subdomains: 'abc',
+
+        maxZoom: 19
+
+    }).addTo(map);
+
+
+
+    L.control.zoom({
+
+        position: 'topright'
+
+    }).addTo(map);
+
+
+
+    var planeIcon = L.divIcon({
+
+        className: '',
+
+        html: `
+
+            <div class="custom-marker">
+
+                <svg viewBox="0 0 24 24">
+
+                    <path d="M2 21l20-9L2 3v7l15 2-15 2z"/>
+
+                </svg>
+
+            </div>
+
+        `,
+
+        iconSize: [42, 42],
+
+        iconAnchor: [21, 21]
+
+    });
+
+
+
+    var marker = L.marker([12.9916, 80.2336], {icon: planeIcon}).addTo(map);
+
+    // Draw initial heatmap for default college (IIT Madras)
+    // Will be redrawn after onboarding with the selected college
+    var heatLayers = [];
+
+
+
+    function sendMessage() {
+
+        const input = document.getElementById("input");
+
+        const text = input.value.trim();
+
+        if (text === "") return;
+
+
+
+        const message = document.createElement("div");
+
+        message.className = "message";
+
+        message.textContent = text;
+
+
+
+        document.getElementById("messages").appendChild(message);
+
+        input.value = "";
+
+    }
+
+
+
+    document.getElementById("input").addEventListener("keypress", function(e) {
+
+        if (e.key === "Enter") sendMessage();
+
+    });
+
+
+    /* ── BRANCH SUBJECTS DATA ── */
+    const branchSubjects = {
+        cse:  [
+            { name: 'Data Structures',      att: 91, cur: 80 },
+            { name: 'Operating Systems',    att: 76, cur: 55 },
+            { name: 'DBMS',                 att: 83, cur: 72 },
+            { name: 'Computer Networks',    att: 68, cur: 48 },
+            { name: 'Machine Learning',     att: 88, cur: 90 },
+        ],
+        mech: [
+            { name: 'Thermodynamics',       att: 85, cur: 74 },
+            { name: 'Fluid Mechanics',      att: 72, cur: 60 },
+            { name: 'Strength of Materials',att: 90, cur: 82 },
+            { name: 'Manufacturing Proc.',  att: 65, cur: 50 },
+            { name: 'Machine Design',       att: 78, cur: 68 },
+        ],
+        ece:  [
+            { name: 'Signals & Systems',    att: 88, cur: 76 },
+            { name: 'Digital Electronics',  att: 74, cur: 62 },
+            { name: 'VLSI Design',          att: 80, cur: 70 },
+            { name: 'Comm. Systems',        att: 66, cur: 52 },
+            { name: 'Microprocessors',      att: 92, cur: 85 },
+        ],
+        eee:  [
+            { name: 'Circuit Theory',       att: 87, cur: 78 },
+            { name: 'Power Systems',        att: 71, cur: 58 },
+            { name: 'Control Systems',      att: 83, cur: 73 },
+            { name: 'Electrical Machines',  att: 69, cur: 55 },
+            { name: 'Power Electronics',    att: 90, cur: 80 },
+        ],
+        aiml: [
+            { name: 'Machine Learning',     att: 93, cur: 88 },
+            { name: 'Deep Learning',        att: 80, cur: 72 },
+            { name: 'NLP',                  att: 75, cur: 60 },
+            { name: 'Computer Vision',      att: 88, cur: 78 },
+            { name: 'Reinforcement Learn.', att: 65, cur: 50 },
+        ],
+        aero: [
+            { name: 'Aerodynamics',         att: 86, cur: 75 },
+            { name: 'Flight Mechanics',     att: 73, cur: 62 },
+            { name: 'Propulsion Systems',   att: 81, cur: 70 },
+            { name: 'Structural Analysis',  att: 68, cur: 54 },
+            { name: 'Avionics',             att: 90, cur: 83 },
+        ],
+        civil: [
+            { name: 'Structural Engg.',     att: 84, cur: 72 },
+            { name: 'Geotechnical Engg.',   att: 70, cur: 58 },
+            { name: 'Transportation Engg.', att: 88, cur: 76 },
+            { name: 'Hydraulics',           att: 65, cur: 50 },
+            { name: 'Environmental Engg.',  att: 79, cur: 66 },
+        ],
+        chem: [
+            { name: 'Process Dynamics',     att: 82, cur: 70 },
+            { name: 'Mass Transfer',        att: 74, cur: 60 },
+            { name: 'Heat Transfer',        att: 88, cur: 78 },
+            { name: 'Reaction Engineering', att: 67, cur: 52 },
+            { name: 'Thermodynamics',       att: 91, cur: 84 },
+        ],
+    };
+
+    function renderProgressBars(branch) {
+        const subjects = branchSubjects[branch] || branchSubjects['cse'];
+        let attHtml = '', curHtml = '';
+        subjects.forEach(s => {
+            const attLow  = s.att < 75;
+            const curLow  = s.cur < 60;
+            const attBar  = attLow  ? 'background:linear-gradient(90deg,#e57373,#ffb74d)' : '';
+            const curBar  = curLow  ? 'background:linear-gradient(90deg,#7a5a40,#ffb74d)' : '';
+            attHtml += `<div class="progress-wrap">
+                <div class="progress-label"><span>${s.name}</span><span>${s.att}%</span></div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${s.att}%;${attBar}"></div></div>
+            </div>`;
+            curHtml += `<div class="progress-wrap">
+                <div class="progress-label"><span>${s.name}</span><span>${s.cur}%</span></div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${s.cur}%;${curBar}"></div></div>
+            </div>`;
+        });
+        document.getElementById('attendance-bars').innerHTML = attHtml;
+        document.getElementById('curriculum-bars').innerHTML = curHtml;
+    }
+
+    /* ── ADDITIONS: campus DB, onboarding, page nav ── */
+
+    const campusDB = {
+        "iit bombay":          { lat: 19.1334, lon: 72.9133 },
+        "iit delhi":           { lat: 28.5459, lon: 77.1926 },
+        "iit madras":          { lat: 12.9916, lon: 80.2336 },
+        "iit kharagpur":       { lat: 22.3149, lon: 87.3105 },
+        "iit kanpur":          { lat: 26.5123, lon: 80.2329 },
+        "iit roorkee":         { lat: 29.8654, lon: 77.8963 },
+        "iit hyderabad":       { lat: 17.5931, lon: 78.1211 },
+        "iit guwahati":        { lat: 26.1880, lon: 91.6915 },
+        "nit trichy":          { lat: 10.7605, lon: 78.8130 },
+        "nit warangal":        { lat: 18.0000, lon: 79.5300 },
+        "nit surathkal":       { lat: 13.0102, lon: 74.7940 },
+        "bits pilani":         { lat: 28.3644, lon: 73.3184 },
+        "bits goa":            { lat: 15.3994, lon: 73.8784 },
+        "bits hyderabad":      { lat: 17.5449, lon: 78.5718 },
+        "vit vellore":         { lat: 12.9692, lon: 79.1559 },
+        "vit chennai":         { lat: 12.8406, lon: 80.1534 },
+        "manipal institute":   { lat: 13.3528, lon: 74.7918 },
+        "srm ktr":             { lat: 12.8231, lon: 80.0444 },
+        "amity noida":         { lat: 28.5447, lon: 77.3336 },
+        "jadavpur university": { lat: 22.4997, lon: 88.3712 },
+        "anna university":     { lat: 13.0108, lon: 80.2356 },
+        "delhi university":    { lat: 28.6880, lon: 77.2090 },
+        "pune university":     { lat: 18.5613, lon: 73.8563 },
+        "osmania university":  { lat: 17.4156, lon: 78.5266 },
+        "bangalore university":{ lat: 12.9596, lon: 77.5722 },
+        "christ university":   { lat: 12.9358, lon: 77.6100 },
+        "pes university":      { lat: 12.9122, lon: 77.5240 },
+        "rv college":          { lat: 12.9238, lon: 77.4983 },
+        "ms ramaiah":          { lat: 13.0197, lon: 77.5628 },
+        "bms college":         { lat: 12.9414, lon: 77.5634 },
+    };
+
+    function findCampus(name) {
+        const key = name.toLowerCase().trim();
+        for (const [k, v] of Object.entries(campusDB)) {
+            if (key.includes(k) || k.includes(key)) return v;
+        }
+        return null;
+    }
+
+    let currentStep = 0;
+
+    function updateDots(step) {
+        for (let i = 0; i < 3; i++) {
+            const d = document.getElementById('dot' + i);
+            d.className = 'step-dot' + (i < step ? ' done' : i === step ? ' active' : '');
+        }
+    }
+
+    function nextStep(from) {
+        document.getElementById('err' + from).textContent = '';
+        if (from === 0 && !document.getElementById('inp-name').value.trim()) {
+            document.getElementById('err0').textContent = 'Please enter your name.'; return;
+        }
+        if (from === 1 && !document.getElementById('inp-college').value) {
+            document.getElementById('err1').textContent = 'Please select your college.'; return;
+        }
+        document.getElementById('step' + from).classList.add('hidden');
+        currentStep = from + 1;
+        document.getElementById('step' + currentStep).classList.remove('hidden');
+        updateDots(currentStep);
+    }
+
+    function prevStep(from) {
+        document.getElementById('step' + from).classList.add('hidden');
+        currentStep = from - 1;
+        document.getElementById('step' + currentStep).classList.remove('hidden');
+        updateDots(currentStep);
+    }
+
+    function finishOnboarding() {
+        const branch = document.getElementById('inp-branch').value;
+        const sem    = document.getElementById('inp-sem').value;
+        if (!branch) { document.getElementById('err2').textContent = 'Please select your branch.'; return; }
+        if (!sem)    { document.getElementById('err2').textContent = 'Please select your semester.'; return; }
+
+        const branchLabels = {
+            cse: 'Computer Science Engineering', mech: 'Mechanical Engineering',
+            ece: 'Electronics & Communication', eee: 'Electrical & Electronics',
+            aiml: 'AI & Machine Learning', aero: 'Aerospace Engineering',
+            civil: 'Civil Engineering', chem: 'Chemical Engineering'
+        };
+
+        const user = {
+            name:     document.getElementById('inp-name').value.trim(),
+            college:  document.getElementById('inp-college').value,
+            branch,
+            branchLabel: branchLabels[branch] || branch,
+            semester: sem
+        };
+
+        document.getElementById('onboarding').classList.add('hidden');
+        document.body.classList.add('app-mode');
+        document.getElementById('appWrapper').classList.add('visible');
+
+        document.getElementById('navUser').textContent = `👤 ${user.name} · ${user.semester} Sem`;
+        document.getElementById('dashGreeting').innerHTML = `Dashboard <small>Welcome back, ${user.name}! 👋</small>`;
+
+        // Render branch-specific subjects
+        renderProgressBars(user.branch);
+
+        // Set map to chosen college and draw heatmap
+        const campus = findCampus(user.college);
+        if (campus) {
+            map.setView([campus.lat, campus.lon], 16);
+            marker.setLatLng([campus.lat, campus.lon]);
+            drawHeatmap(campus.lat, campus.lon);
+        }
+
+        setTimeout(function() { map.invalidateSize(); }, 200);
+    }
+
+    /* ── HEATMAP ── */
+
+    // Create a custom pane that sits BELOW the label/tooltip pane so labels stay visible
+    map.createPane('heatPane');
+    map.getPane('heatPane').style.zIndex = 200;
+    map.getPane('heatPane').style.pointerEvents = 'none';
+
+    function drawHeatmap(baseLat, baseLon) {
+        // Clear previous heatmap circles
+        heatLayers.forEach(function(c) { map.removeLayer(c); });
+        heatLayers = [];
+
+        // Facility offsets (lat/lon deltas at zoom 16 ≈ ~50–200m)
+        // Each entry: [latOffset, lonOffset, radius(m), color, opacity, label]
+        var spots = [
+            // HIGH density — canteen, main gate, library entrance
+            [ 0.0010,  0.0005,  90, '#ff3232', 0.45, 'Canteen'],
+            [-0.0008,  0.0012,  75, '#ff3232', 0.40, 'Main Gate'],
+            [ 0.0003, -0.0010,  80, '#ff4500', 0.38, 'Library'],
+
+            // MEDIUM density — labs, lecture halls, sports ground
+            [-0.0014,  0.0003,  65, '#ffa500', 0.38, 'Lab Block'],
+            [ 0.0016, -0.0007,  70, '#ffa500', 0.35, 'Lecture Hall'],
+            [-0.0005,  0.0018,  60, '#ffcc00', 0.35, 'Sports Ground'],
+            [ 0.0020,  0.0015,  55, '#ffa500', 0.32, 'Workshop'],
+
+            // LOW density — hostels, admin, parking
+            [-0.0020, -0.0015,  55, '#50c850', 0.35, 'Hostel A'],
+            [ 0.0025,  0.0000,  50, '#50c850', 0.32, 'Hostel B'],
+            [-0.0010, -0.0020,  45, '#50c850', 0.30, 'Admin Block'],
+            [ 0.0000,  0.0025,  40, '#50c850', 0.28, 'Parking'],
+        ];
+
+        spots.forEach(function(s) {
+            var circle = L.circle([baseLat + s[0], baseLon + s[1]], {
+                radius: s[2],
+                color: 'transparent',
+                fillColor: s[3],
+                fillOpacity: s[4],
+                pane: 'heatPane',
+                interactive: false
+            }).addTo(map);
+            heatLayers.push(circle);
+        });
+    }
+
+    function showPage(name, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-' + name).classList.add('active');
+        if (btn) btn.classList.add('active');
+        // Re-render map if switching to dashboard or smart map
+        setTimeout(function() { map.invalidateSize(); }, 100);
+    }
+
+</script>
+
+
+
+</body>
+
+</html>
